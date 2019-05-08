@@ -6,8 +6,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const app = express();
 
-console.log(process.env.API_TOKEN);
-app.use(morgan('dev'));
+const morganSetting = process.env.NODE_ENV === 'production' ? 'tiny' : 'common';
+app.use(morgan(morganSetting));
 app.use(cors());
 app.use(helmet());
 
@@ -25,7 +25,7 @@ app.get('/movie', function handleGetMovies(req, res) {
 	const genre = req.query.genre;
 	const country = req.query.country;
 	const avg_vote = req.query.avg_vote;
-	console.log(avg_vote);
+
 	if (genre) {
 		response = response.filter(movie =>
 			movie.genre
@@ -47,7 +47,17 @@ app.get('/movie', function handleGetMovies(req, res) {
 	res.json(response);
 });
 
-const PORT = 8000;
+app.use((error, req, res, next) => {
+	let response;
+	if (process.env.NODE_ENV === 'production') {
+		response = { error: { message: 'server error' } };
+	} else {
+		response = { error };
+	}
+	res.status(500).json(response);
+});
+
+const PORT = process.env.NODE_ENV || 8000;
 
 app.listen(PORT, () => {
 	console.log(`Listening to Port ${PORT}`);
